@@ -119,19 +119,28 @@ app.get('/api/exams', (_req, res) => {
   });
 });
 
+function shuffleArray(items) {
+  const copy = [...items];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+  }
+  return copy;
+}
+
 function buildQuestionSet(examId) {
   const templates = {
     kids: [
-      { prompt: 'I have many fibers, my name is related to one body part in the hand, I am green in colour, and vegans can eat me. What am I?', options: ['Lady finger', 'Apple', 'Banana', 'Carrot'], answer: 0, explanation: 'Lady finger is a green vegetable that is often eaten by vegans.' },
-      { prompt: 'I am yellow and curved. Monkeys love me. What am I?', options: ['Banana', 'Potato', 'Tomato', 'Cabbage'], answer: 0, explanation: 'Bananas are yellow, curved, and a favorite fruit for monkeys.' },
-      { prompt: 'I am round and red. I can be used in salads and ketchup. What am I?', options: ['Tomato', 'Orange', 'Pear', 'Mango'], answer: 0, explanation: 'A tomato is red, round, and used in many foods.' },
-      { prompt: 'I have a hard shell and a soft inside. People crack me open to eat. What am I?', options: ['Egg', 'Lemon', 'Onion', 'Pea'], answer: 0, explanation: 'An egg has a shell outside and soft food inside.' },
-      { prompt: 'I am white and fluffy. I float in the sky. What am I?', options: ['Cloud', 'Stone', 'Tree', 'Book'], answer: 0, explanation: 'Clouds are white and fluffy and float in the sky.' },
-      { prompt: 'I am a pet that barks and loves to play. What am I?', options: ['Dog', 'Fish', 'Bird', 'Horse'], answer: 0, explanation: 'Dogs are common pets that bark and enjoy playing.' },
-      { prompt: 'I am small and yellow. I shine in the sky during the day. What am I?', options: ['Sun', 'Moon', 'Star', 'Cloud'], answer: 0, explanation: 'The sun is a bright yellow star that shines in the day.' },
-      { prompt: 'I have four legs and a tail. I moo and give milk. What am I?', options: ['Cow', 'Sheep', 'Goat', 'Pig'], answer: 0, explanation: 'A cow is an animal that gives milk and says moo.' },
-      { prompt: 'I am round and you can bounce me. What am I?', options: ['Ball', 'Spoon', 'Chair', 'Lamp'], answer: 0, explanation: 'A ball is round and can be bounced.' },
-      { prompt: 'I have pages and words. Children read me for stories. What am I?', options: ['Book', 'Pen', 'Pencil', 'Table'], answer: 0, explanation: 'A book contains pages and words for reading stories.' },
+      { prompt: 'I have many fibers, my name is related to one body part in the hand, I am green in colour, and vegans can eat me. What am I?', type: 'text', answerText: 'Lady finger', explanation: 'Lady finger is a green vegetable that is often eaten by vegans.' },
+      { prompt: 'I am yellow and curved. Monkeys love me. What am I?', type: 'text', answerText: 'Banana', explanation: 'Bananas are yellow, curved, and a favorite fruit for monkeys.' },
+      { prompt: 'I am round and red. I can be used in salads and ketchup. What am I?', type: 'text', answerText: 'Tomato', explanation: 'A tomato is red, round, and used in many foods.' },
+      { prompt: 'I have a hard shell and a soft inside. People crack me open to eat. What am I?', type: 'text', answerText: 'Egg', explanation: 'An egg has a shell outside and soft food inside.' },
+      { prompt: 'I am white and fluffy. I float in the sky. What am I?', type: 'text', answerText: 'Cloud', explanation: 'Clouds are white and fluffy and float in the sky.' },
+      { prompt: 'I am a pet that barks and loves to play. What am I?', type: 'text', answerText: 'Dog', explanation: 'Dogs are common pets that bark and enjoy playing.' },
+      { prompt: 'I am small and yellow. I shine in the sky during the day. What am I?', type: 'text', answerText: 'Sun', explanation: 'The sun is a bright yellow star that shines in the day.' },
+      { prompt: 'I have four legs and a tail. I moo and give milk. What am I?', type: 'text', answerText: 'Cow', explanation: 'A cow is an animal that gives milk and says moo.' },
+      { prompt: 'I am round and you can bounce me. What am I?', type: 'text', answerText: 'Ball', explanation: 'A ball is round and can be bounced.' },
+      { prompt: 'I have pages and words. Children read me for stories. What am I?', type: 'text', answerText: 'Book', explanation: 'A book contains pages and words for reading stories.' },
     ],
     aws: [
       { prompt: 'Which AWS service is most commonly used to store static website assets?', options: ['Amazon S3', 'Amazon RDS', 'Amazon EC2', 'AWS Lambda'], answer: 0, explanation: 'Amazon S3 is designed for durable object storage and is a common choice for static website assets.' },
@@ -186,7 +195,7 @@ function buildQuestionSet(examId) {
   const baseQuestions = templates[examId] || [];
   if (!baseQuestions.length) return [];
 
-  return Array.from({ length: 50 }, (_, index) => {
+  const questionPool = Array.from({ length: 50 }, (_, index) => {
     const base = baseQuestions[index % baseQuestions.length];
     return {
       ...base,
@@ -194,6 +203,8 @@ function buildQuestionSet(examId) {
       explanation: `${base.explanation} This item is part of the ${examId.toUpperCase()} practice set.`,
     };
   });
+
+  return shuffleArray(questionPool);
 }
 
 app.get('/api/exams/:examId/questions', (req, res) => {

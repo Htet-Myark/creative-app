@@ -60,6 +60,17 @@ function App() {
     setUser(data.user);
   };
 
+  const normalizeQuestions = (examId, items) => items.map((question) => {
+    if (examId === 'kids' && question.type !== 'text' && Array.isArray(question.options)) {
+      return {
+        ...question,
+        type: 'text',
+        answerText: question.options[question.answer] || '',
+      };
+    }
+    return question;
+  });
+
   const startExam = async (examId) => {
     setSelectedExam(examId);
     setCurrentQuestion(0);
@@ -67,23 +78,39 @@ function App() {
     setResult(null);
     const response = await fetch(`${API_URL}/api/exams/${examId}/questions`);
     const data = await response.json();
-    setQuestions(data.questions || []);
+    setQuestions(normalizeQuestions(examId, data.questions || []));
   };
 
-  const selectAnswer = (index) => {
+  const selectAnswer = (value) => {
     const next = [...answers];
-    next[currentQuestion] = index;
+    next[currentQuestion] = value;
     setAnswers(next);
   };
 
   const submitExam = async () => {
-    const correct = questions.reduce((count, question, index) => count + (answers[index] === question.answer ? 1 : 0), 0);
+    const normalizeText = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const correct = questions.reduce((count, question, index) => {
+      const selected = answers[index];
+      const isTextQuestion = question.type === 'text' || selectedExam === 'kids';
+      if (isTextQuestion) {
+        return count + (normalizeText(selected) === normalizeText(question.answerText) ? 1 : 0);
+      }
+      return count + (selected === question.answer ? 1 : 0);
+    }, 0);
     const percentage = Math.round((correct / questions.length) * 100);
-    const review = questions.map((question, index) => ({
-      ...question,
-      selectedAnswer: answers[index],
-      isCorrect: answers[index] === question.answer,
-    }));
+    const review = questions.map((question, index) => {
+      const selected = answers[index];
+      const isTextQuestion = question.type === 'text' || selectedExam === 'kids';
+      const normalizeText = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const isCorrect = isTextQuestion
+        ? normalizeText(selected) === normalizeText(question.answerText)
+        : selected === question.answer;
+      return {
+        ...question,
+        selectedAnswer: selected,
+        isCorrect,
+      };
+    });
 
     const response = await fetch(`${API_URL}/api/exams/${selectedExam}/submit`, {
       method: 'POST',
@@ -202,13 +229,25 @@ function App() {
             </div>
             <p>{currentQuestion + 1}/{questions.length}</p>
           </div>
-          <div className="options">
-            {questions[currentQuestion].options.map((option, index) => (
-              <button key={option} className={`option-btn ${answers[currentQuestion] === index ? 'selected' : ''}`} onClick={() => selectAnswer(index)}>
-                {option}
-              </button>
-            ))}
-          </div>
+          {questions[currentQuestion].type === 'text' || selectedExam === 'kids' ? (
+            <div className="form-group">
+              <label>Your answer</label>
+              <input
+                type="text"
+                value={answers[currentQuestion] || ''}
+                onChange={(e) => selectAnswer(e.target.value)}
+                placeholder="Type your answer here"
+              />
+            </div>
+          ) : (
+            <div className="options">
+              {questions[currentQuestion].options.map((option, index) => (
+                <button key={option} className={`option-btn ${answers[currentQuestion] === index ? 'selected' : ''}`} onClick={() => selectAnswer(index)}>
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="actions">
             <button className="secondary-btn" disabled={currentQuestion === 0} onClick={() => setCurrentQuestion((prev) => prev - 1)}>Previous</button>
             {currentQuestion < questions.length - 1 ? (
@@ -231,8 +270,10 @@ function App() {
             {result?.review?.map((item, index) => (
               <div key={`${item.prompt}-${index}`} className="review-item">
                 <h3>{index + 1}. {item.prompt}</h3>
-                <p><strong>Your answer:</strong> {item.selectedAnswer === undefined ? 'No answer selected' : item.options[item.selectedAnswer]}</p>
-                <p><strong>Correct answer:</strong> {item.options[item.answer]}</p>
+                <p><strong>Your answer:</strong> {item.type === 'text' || selectedExam === 'kids'
+                  ? (item.selectedAnswer === undefined || item.selectedAnswer === '' ? 'No answer entered' : item.selectedAnswer)
+                  : (item.selectedAnswer === undefined ? 'No answer selected' : item.options[item.selectedAnswer])}</p>
+                <p><strong>Correct answer:</strong> {item.type === 'text' || selectedExam === 'kids' ? item.answerText : item.options[item.answer]}</p>
                 <p className={item.isCorrect ? 'success' : 'warning'}>{item.isCorrect ? 'Correct' : 'Needs review'}</p>
                 <p className="small">{item.explanation}</p>
               </div>
