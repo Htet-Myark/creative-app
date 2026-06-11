@@ -215,35 +215,35 @@ const photoQuizWords= [
 ];
 
 const logoQuizBrands = [
-  { name: 'YouTube', slug: 'youtube' },
+  { name: 'YouTube', slug: 'youtube', aliases: ['yt'] },
   { name: 'Netflix', slug: 'netflix' },
   { name: 'Spotify', slug: 'spotify' },
   { name: 'Google', slug: 'google' },
   { name: 'Apple', slug: 'apple' },
-  { name: 'Amazon', slug: 'amazon' },
-  { name: 'Instagram', slug: 'instagram' },
+  { name: 'Telegram', slug: 'telegram' },
+  { name: 'Instagram', slug: 'instagram', aliases: ['insta', 'ig'] },
   { name: 'WhatsApp', slug: 'whatsapp' },
   { name: 'TikTok', slug: 'tiktok' },
-  { name: 'Snapchat', slug: 'snapchat' },
+  { name: 'Snapchat', slug: 'snapchat', aliases: ['snap'] },
   { name: 'Twitch', slug: 'twitch' },
   { name: 'Discord', slug: 'discord' },
   { name: 'Roblox', slug: 'roblox' },
   { name: 'Steam', slug: 'steam' },
-  { name: 'Nintendo', slug: 'nintendo' },
-  { name: 'PlayStation', slug: 'playstation' },
-  { name: 'Xbox', slug: 'xbox' },
+  { name: 'GitHub', slug: 'github' },
+  { name: 'PlayStation', slug: 'playstation', aliases: ['ps', 'ps5', 'ps4'] },
+  { name: 'Duolingo', slug: 'duolingo' },
   { name: 'Zoom', slug: 'zoom' },
-  { name: "McDonald's", slug: 'mcdonalds' },
-  { name: 'LEGO', slug: 'lego' },
+  { name: 'Shazam', slug: 'shazam' },
+  { name: 'Waze', slug: 'waze' },
   { name: 'NASA', slug: 'nasa' },
-  { name: 'Coca-Cola', slug: 'cocacola' },
-  { name: 'Microsoft', slug: 'microsoft' },
+  { name: 'Coca-Cola', slug: 'cocacola', aliases: ['coke', 'coca cola'] },
+  { name: 'Google Chrome', slug: 'googlechrome', aliases: ['chrome'] },
   { name: 'Samsung', slug: 'samsung' },
-  { name: 'Facebook', slug: 'facebook' },
-  { name: 'X', slug: 'x' },
+  { name: 'Facebook', slug: 'facebook', aliases: ['fb'] },
+  { name: 'X', slug: 'x', aliases: ['twitter'] },
   { name: 'Reddit', slug: 'reddit' },
   { name: 'Pinterest', slug: 'pinterest' },
-  { name: 'LinkedIn', slug: 'linkedin' },
+  { name: 'DoorDash', slug: 'doordash' },
   { name: 'PayPal', slug: 'paypal' },
   { name: 'Visa', slug: 'visa' },
   { name: 'Uber', slug: 'uber' },
@@ -251,18 +251,20 @@ const logoQuizBrands = [
   { name: 'Starbucks', slug: 'starbucks' },
   { name: 'KFC', slug: 'kfc' },
   { name: 'Burger King', slug: 'burgerking' },
-  { name: 'Pepsi', slug: 'pepsi' },
+  { name: 'Lyft', slug: 'lyft' },
   { name: 'Nike', slug: 'nike' },
   { name: 'Adidas', slug: 'adidas' },
-  { name: 'Slack', slug: 'slack' },
+  { name: 'eBay', slug: 'ebay' },
   { name: 'Figma', slug: 'figma' },
   { name: 'Dropbox', slug: 'dropbox' },
-  { name: 'Disney+', slug: 'disneyplus' },
+  { name: 'Etsy', slug: 'etsy' },
   { name: 'Sony', slug: 'sony' },
-  { name: 'Adobe', slug: 'adobe' },
+  { name: 'SoundCloud', slug: 'soundcloud' },
   { name: 'Shopify', slug: 'shopify' },
   { name: 'Stripe', slug: 'stripe' },
-  { name: 'Canva', slug: 'canva' },
+  { name: 'Vimeo', slug: 'vimeo' },
+  { name: 'Patreon', slug: 'patreon' },
+  { name: 'Twitch', slug: 'twitch' },
 ];
 
 function normalizeText(value) {
@@ -329,8 +331,6 @@ function App() {
   const [logoFeedback, setLogoFeedback] = useState(null);
   const [logoScore, setLogoScore] = useState(0);
   const [logoGuesserState, setLogoGuesserState] = useState('playing');
-  const [logoHint, setLogoHint] = useState(null);
-  const [logoHintLoading, setLogoHintLoading] = useState(false);
 
   const pronunciationIndexRef = useRef(pronunciationIndex);
   const roundWordsRef = useRef(roundWords);
@@ -763,8 +763,6 @@ function App() {
     setLogoGuess('');
     setLogoFeedback(null);
     setLogoScore(0);
-    setLogoHint(null);
-    setLogoHintLoading(false);
     setLogoGuesserState('playing');
     setView('logoGuesser');
   };
@@ -772,7 +770,9 @@ function App() {
   const submitLogoGuess = () => {
     const current = logoRound[logoRoundIndex];
     if (!current || !logoGuess.trim()) return;
-    const isCorrect = normalizeForLogo(logoGuess) === normalizeForLogo(current.name);
+    const normalizedGuess = normalizeForLogo(logoGuess);
+    const accepted = [current.name, ...(current.aliases || [])];
+    const isCorrect = accepted.some((a) => normalizeForLogo(a) === normalizedGuess);
     if (isCorrect) setLogoScore((prev) => prev + 1);
     setLogoFeedback(isCorrect ? 'correct' : 'wrong');
   };
@@ -785,28 +785,6 @@ function App() {
       setLogoRoundIndex(next);
       setLogoGuess('');
       setLogoFeedback(null);
-      setLogoHint(null);
-      setLogoHintLoading(false);
-    }
-  };
-
-  const fetchLogoHint = async () => {
-    const current = logoRound[logoRoundIndex];
-    if (!current) return;
-    setLogoHintLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/foundry/logo-hint`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brandName: current.name }),
-      }).catch(() => { throw new Error('Cannot reach the server.'); });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to get hint.');
-      setLogoHint(data.hint);
-    } catch {
-      setLogoHint('Hint not available right now.');
-    } finally {
-      setLogoHintLoading(false);
     }
   };
 
@@ -897,7 +875,7 @@ function App() {
         <div className="exam-card foundry-card">
           <div className="foundry-badge">✦ Foundry IQ</div>
           <h3>Logo Guesser</h3>
-          <p>Look at a brand icon and guess the name. Get AI hints if you're stuck!</p>
+          <p>Look at a brand icon and type the name. How many can you get right?</p>
           <button className="primary-btn" onClick={startLogoGuesser}>Play logo quiz</button>
         </div>
       </div>
@@ -1131,17 +1109,6 @@ function App() {
 
               {logoFeedback === null ? (
                 <>
-                  {logoHintLoading && (
-                    <div className="foundry-loading" style={{ padding: '12px 0' }}>
-                      <div className="foundry-spinner" />
-                      <p className="small">Getting a hint...</p>
-                    </div>
-                  )}
-                  {logoHint && (
-                    <div className="logo-hint-box">
-                      <p className="small" style={{ margin: 0 }}>💡 {logoHint}</p>
-                    </div>
-                  )}
                   <div className="form-group" style={{ marginTop: 16 }}>
                     <label>What brand is this?</label>
                     <input
@@ -1155,9 +1122,6 @@ function App() {
                   </div>
                   <div className="actions">
                     <button className="primary-btn" onClick={submitLogoGuess} disabled={!logoGuess.trim()}>Guess!</button>
-                    {!logoHint && !logoHintLoading && (
-                      <button className="secondary-btn" onClick={fetchLogoHint}>Give me a hint</button>
-                    )}
                   </div>
                 </>
               ) : (
