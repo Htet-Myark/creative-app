@@ -464,7 +464,7 @@ function WorldMap({ onNavigate }) {
 
       <div className="world-overlay world-header">
         <div>
-          <p className="eyebrow" style={{ marginBottom: 2 }}>Agent League World</p>
+          <p className="eyebrow" style={{ marginBottom: 2 }}>EduPlayground World</p>
           <p className="small" style={{ margin: 0 }}>Walk with WASD / arrows or tap where you want to go. Space to jump.</p>
         </div>
       </div>

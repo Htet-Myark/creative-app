@@ -24,7 +24,7 @@ function getClient() {
   });
 }
 
-const server = new McpServer({ name: 'agent-league', version: '1.0.0' });
+const server = new McpServer({ name: 'eduplayground', version: '1.0.0' });
 
 server.tool(
   'generate_riddle',
@@ -96,13 +96,13 @@ Never say the brand name. Respond with JSON: { "hint": "..." }`,
 
 server.tool(
   'list_exams',
-  'List all available practice exam topics in the Agent League platform.',
+  'List all available practice exam topics in the EduPlayground platform.',
   {},
   async () => ({
     content: [{
       type: 'text',
       text: [
-        '**Agent League — Available Practice Exams:**',
+        '**EduPlayground — Available Practice Exams:**',
         '',
         '| ID | Title | Description |',
         '|---|---|---|',

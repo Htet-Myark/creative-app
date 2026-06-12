@@ -1,4 +1,4 @@
-# Agent League — AI-Powered Learning & Creativity World
+# EduPlayground — AI-Powered Learning & Creativity World
 
 > **Microsoft Agents League @ AISF 2026 — Battle #1: Creative Apps with GitHub Copilot**
 > Submitted by Htet-Myark · License: MIT
@@ -149,7 +149,7 @@ Grounding & anti-hallucination measures: riddles return a cited `source`; recaps
 
 ## MCP Server — GitHub Copilot Integration
 
-Agent League ships an **MCP server** that connects its Foundry IQ features directly into GitHub Copilot Chat in VS Code, registered automatically via `.vscode/mcp.json`:
+EduPlayground ships an **MCP server** that connects its Foundry IQ features directly into GitHub Copilot Chat in VS Code, registered automatically via `.vscode/mcp.json`:
 
 | Tool | Ask Copilot |
 |---|---|
@@ -184,7 +184,7 @@ GitHub Copilot was used throughout the development of this project:
 ### Run it
 ```bash
 git clone <your-repo-url>
-cd agent-league
+cd creative-app
 npm install                                  # installs client, server, and mcp workspaces
 echo "GITHUB_TOKEN=ghp_your_token" > server/.env
 npm run dev
@@ -203,7 +203,7 @@ npm run dev
 ## Project Structure
 
 ```
-agent-league/
+eduplayground/
 ├── client/
 │   └── src/
 │       ├── App.jsx                  # View routing only
