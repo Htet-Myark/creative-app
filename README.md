@@ -241,7 +241,7 @@ agent-league/
 | Microsoft IQ — **Foundry IQ** | ✅ 5 endpoints: riddles · vision · stories · recaps · hints |
 | MCP Server for Copilot | ✅ 4 tools via `.vscode/mcp.json` |
 | Creative application | ✅ Gamified 3D learning world |
-| Demo video (≤5 min, YouTube/Vimeo) | 🎬 *link here before submitting* |
+| Demo video (≤5 min, YouTube/Vimeo) |
 | Track | Battle #1 — Creative Apps |
 
 ---
