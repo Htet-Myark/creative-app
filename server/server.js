@@ -1,3 +1,5 @@
+import http from 'http';
+import os from 'os';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -6,6 +8,7 @@ import { Pool } from 'pg';
 import { questionTemplates } from './data/questions.js';
 import { isFoundryConfigured, generateRiddle, randomTopic, classifyImage, generateLogoHint, generateBedtimeStory } from './services/foundry.js';
 import { synthesizeSpeech } from './services/tts.js';
+import { setupBattleServer } from './services/battle.js';
 
 dotenv.config();
 
@@ -142,6 +145,20 @@ app.post('/api/foundry/story', async (req, res) => {
   }
 });
 
+app.get('/api/battle/info', (_req, res) => {
+  let lanIp = null;
+  for (const interfaces of Object.values(os.networkInterfaces())) {
+    for (const net of interfaces || []) {
+      if (net.family === 'IPv4' && !net.internal) {
+        lanIp = net.address;
+        break;
+      }
+    }
+    if (lanIp) break;
+  }
+  res.json({ lanIp, port: 3000 });
+});
+
 app.post('/api/tts', async (req, res) => {
   const { text } = req.body || {};
   if (!text || typeof text !== 'string') {
@@ -273,6 +290,9 @@ app.post('/api/exams/:examId/submit', async (req, res) => {
   res.json({ success: true, records: user.attempts });
 });
 
-app.listen(port, () => {
+const httpServer = http.createServer(app);
+setupBattleServer(httpServer);
+
+httpServer.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });

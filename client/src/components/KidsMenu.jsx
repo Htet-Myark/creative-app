@@ -26,6 +26,11 @@ function KidsMenu({ onNavigate, onBack }) {
           <p>Find an everyday object, snap a photo, and let AI check if you got it right!</p>
           <button className="primary-btn" onClick={() => onNavigate('photoQuiz')}>Start photo quiz</button>
         </div>
+        <div className="exam-card">
+          <h3>Word Battle ⚔️</h3>
+          <p>Fight a friend on another device! Answer word clues to attack and win the duel.</p>
+          <button className="primary-btn" onClick={() => onNavigate('wordBattle')}>Start a battle</button>
+        </div>
         <div className="exam-card foundry-card">
           <div className="foundry-badge">✦ Foundry IQ</div>
           <h3>Bedtime Story Teller</h3>

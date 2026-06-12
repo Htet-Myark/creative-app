@@ -9,6 +9,7 @@ import PhotoQuiz from './components/PhotoQuiz';
 import LogoGuesser from './components/LogoGuesser';
 import SleepSounds from './components/SleepSounds';
 import StoryTeller from './components/StoryTeller';
+import WordBattle from './components/WordBattle';
 
 function App() {
   const [view, setView] = useState('home');
@@ -37,6 +38,7 @@ function App() {
       {view === 'logoGuesser' && <LogoGuesser onBack={() => setView('kids')} />}
       {view === 'sleepSounds' && <SleepSounds onBack={() => setView('home')} />}
       {view === 'storyTeller' && <StoryTeller onBack={() => setView('kids')} />}
+      {view === 'wordBattle' && <WordBattle onBack={() => setView('kids')} />}
     </div>
   );
 }
