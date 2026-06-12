@@ -10,6 +10,7 @@ import LogoGuesser from './components/LogoGuesser';
 import SleepSounds from './components/SleepSounds';
 import StoryTeller from './components/StoryTeller';
 import WordBattle from './components/WordBattle';
+import MovieRecap from './components/MovieRecap';
 
 function App() {
   const [view, setView] = useState('home');
@@ -39,6 +40,7 @@ function App() {
       {view === 'sleepSounds' && <SleepSounds onBack={() => setView('home')} />}
       {view === 'storyTeller' && <StoryTeller onBack={() => setView('kids')} />}
       {view === 'wordBattle' && <WordBattle onBack={() => setView('kids')} />}
+      {view === 'movieRecap' && <MovieRecap onBack={() => setView('home')} />}
     </div>
   );
 }

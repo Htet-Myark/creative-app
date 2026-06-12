@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 import { questionTemplates } from './data/questions.js';
-import { isFoundryConfigured, generateRiddle, randomTopic, classifyImage, generateLogoHint, generateBedtimeStory } from './services/foundry.js';
+import { isFoundryConfigured, generateRiddle, randomTopic, classifyImage, generateLogoHint, generateBedtimeStory, generateMovieRecap } from './services/foundry.js';
 import { synthesizeSpeech } from './services/tts.js';
 import { setupBattleServer } from './services/battle.js';
 
@@ -159,16 +159,43 @@ app.get('/api/battle/info', (_req, res) => {
   res.json({ lanIp, port: 3000 });
 });
 
+app.post('/api/foundry/recap', async (req, res) => {
+  if (!isFoundryConfigured()) {
+    return res.status(503).json({ error: 'Foundry IQ is not configured. Add GITHUB_TOKEN to server/.env' });
+  }
+  const { title } = req.body || {};
+  if (!title || typeof title !== 'string' || !title.trim()) {
+    return res.status(400).json({ error: 'title is required.' });
+  }
+  try {
+    const recap = await generateMovieRecap(title.trim().slice(0, 120));
+    res.json({ recap });
+  } catch (err) {
+    console.error('generateMovieRecap error:', err.message);
+    res.status(500).json({ error: 'Failed to generate the recap. Please try again.' });
+  }
+});
+
+const ALLOWED_TTS_VOICES = new Set([
+  'en-US-AriaNeural',
+  'en-US-GuyNeural',
+  'en-US-AnaNeural',
+  'en-GB-SoniaNeural',
+]);
+
 app.post('/api/tts', async (req, res) => {
-  const { text } = req.body || {};
+  const { text, voice, rate } = req.body || {};
   if (!text || typeof text !== 'string') {
     return res.status(400).json({ error: 'text is required.' });
   }
   if (text.length > 2000) {
     return res.status(400).json({ error: 'text is too long (max 2000 characters).' });
   }
+  const options = {};
+  if (typeof voice === 'string' && ALLOWED_TTS_VOICES.has(voice)) options.voice = voice;
+  if (typeof rate === 'string' && /^[+-]\d{1,2}%$/.test(rate)) options.rate = rate;
   try {
-    const audio = await synthesizeSpeech(text);
+    const audio = await synthesizeSpeech(text, options);
     res.set('Content-Type', 'audio/mpeg');
     res.send(audio);
   } catch (err) {

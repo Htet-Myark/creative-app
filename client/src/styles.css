@@ -161,6 +161,13 @@ input[type="range"] { padding: 0; background: transparent; border: none; accent-
 @keyframes battlePop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @media (max-width: 600px) { .battle-arena { flex-direction: column; align-items: stretch; gap: 8px; } .battle-vs { text-align: center; } }
 
+/* ── Movie recap ───────────────────────────────── */
+.recap-meta { margin: 6px 0 8px; }
+.confidence-badge { display: inline-flex; align-items: center; padding: 5px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; border: 1px solid; }
+.confidence-high { background: rgba(69,211,191,0.12); border-color: rgba(69,211,191,0.4); color: #45d3bf; }
+.confidence-medium { background: rgba(255,204,102,0.12); border-color: rgba(255,204,102,0.4); color: #ffcc66; }
+.confidence-low { background: rgba(255,123,123,0.12); border-color: rgba(255,123,123,0.4); color: #ff7b7b; }
+
 /* ── Story teller ───────────────────────────────── */
 .story-text { display: flex; flex-direction: column; gap: 4px; }
 .story-paragraph { font-size: 1.05rem; line-height: 1.7; color: #dce8f7; padding: 6px 10px; border-radius: 10px; margin: 0 0 6px; transition: background 0.3s, color 0.3s; }

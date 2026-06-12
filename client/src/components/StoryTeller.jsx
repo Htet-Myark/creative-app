@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { API_URL } from '../config';
+import { useReadAloud } from '../hooks/useReadAloud';
 
 const STORY_QUESTIONS = [
   {
@@ -60,40 +61,7 @@ function StoryTeller({ onBack }) {
   const [choices, setChoices] = useState({});
   const [story, setStory] = useState(null);
   const [error, setError] = useState('');
-  const [readingState, setReadingState] = useState('idle');
-  const [readingIndex, setReadingIndex] = useState(-1);
-
-  const cancelledRef = useRef(false);
-  const audioRef = useRef(null);
-  const audioCacheRef = useRef(new Map());
-  const modeRef = useRef('neural');
-
-  const clearAudioCache = () => {
-    audioCacheRef.current.forEach((url) => URL.revokeObjectURL(url));
-    audioCacheRef.current.clear();
-  };
-
-  const stopReading = () => {
-    cancelledRef.current = true;
-    if (audioRef.current) {
-      audioRef.current.onended = null;
-      audioRef.current.pause();
-    }
-    window.speechSynthesis?.cancel();
-    setReadingState('idle');
-    setReadingIndex(-1);
-  };
-
-  useEffect(() => () => {
-    cancelledRef.current = true;
-    if (audioRef.current) {
-      audioRef.current.onended = null;
-      audioRef.current.pause();
-    }
-    window.speechSynthesis?.cancel();
-    audioCacheRef.current.forEach((url) => URL.revokeObjectURL(url));
-    audioCacheRef.current.clear();
-  }, []);
+  const { readingState, readingIndex, readError, start, pause, resume, stop, reset } = useReadAloud({ rate: '-10%' });
 
   const fetchStory = async (finalChoices) => {
     setPhase('loading');
@@ -127,8 +95,7 @@ function StoryTeller({ onBack }) {
   };
 
   const restart = () => {
-    stopReading();
-    clearAudioCache();
+    reset();
     setPhase('questions');
     setStep(0);
     setChoices({});
@@ -136,113 +103,7 @@ function StoryTeller({ onBack }) {
     setError('');
   };
 
-  const pickVoice = () => {
-    const voices = window.speechSynthesis.getVoices();
-    const english = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith('en'));
-    return (
-      english.find((v) => /natural|neural/i.test(v.name))
-      || english.find((v) => /google/i.test(v.name))
-      || english[0]
-      || null
-    );
-  };
-
-  const speakChunk = (chunks, index) => {
-    if (cancelledRef.current || index >= chunks.length) {
-      if (!cancelledRef.current) {
-        setReadingState('idle');
-        setReadingIndex(-1);
-      }
-      return;
-    }
-    const utterance = new SpeechSynthesisUtterance(chunks[index]);
-    utterance.rate = 0.85;
-    utterance.pitch = 1.05;
-    const voice = pickVoice();
-    if (voice) utterance.voice = voice;
-    utterance.onend = () => speakChunk(chunks, index + 1);
-    utterance.onerror = () => {
-      if (!cancelledRef.current) {
-        setReadingState('idle');
-        setReadingIndex(-1);
-      }
-    };
-    setReadingIndex(index);
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const fetchChunkAudio = async (chunks, index) => {
-    if (audioCacheRef.current.has(index)) return audioCacheRef.current.get(index);
-    const res = await fetch(`${API_URL}/api/tts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: chunks[index] }),
-    });
-    if (!res.ok) throw new Error('Speech synthesis failed.');
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    audioCacheRef.current.set(index, url);
-    return url;
-  };
-
-  const playChunkNeural = async (chunks, index) => {
-    if (cancelledRef.current) return;
-    if (index >= chunks.length) {
-      setReadingState('idle');
-      setReadingIndex(-1);
-      return;
-    }
-    setReadingIndex(index);
-    try {
-      const url = await fetchChunkAudio(chunks, index);
-      if (cancelledRef.current) return;
-      if (index + 1 < chunks.length) {
-        fetchChunkAudio(chunks, index + 1).catch(() => {});
-      }
-      if (!audioRef.current) audioRef.current = new Audio();
-      const audio = audioRef.current;
-      audio.src = url;
-      audio.onended = () => playChunkNeural(chunks, index + 1);
-      await audio.play();
-    } catch {
-      if (cancelledRef.current) return;
-      // Neural voice unavailable — fall back to the browser's built-in voice.
-      modeRef.current = 'browser';
-      if (window.speechSynthesis) {
-        speakChunk(chunks, index);
-      } else {
-        setReadingState('idle');
-        setReadingIndex(-1);
-        setError('Read-aloud is not available right now. Please try again.');
-      }
-    }
-  };
-
-  const startReading = () => {
-    stopReading();
-    cancelledRef.current = false;
-    modeRef.current = 'neural';
-    setReadingState('reading');
-    playChunkNeural([story.title, ...story.paragraphs], 0);
-  };
-
-  const pauseReading = () => {
-    if (modeRef.current === 'neural') {
-      audioRef.current?.pause();
-    } else {
-      window.speechSynthesis.pause();
-    }
-    setReadingState('paused');
-  };
-
-  const resumeReading = () => {
-    if (modeRef.current === 'neural') {
-      audioRef.current?.play();
-    } else {
-      window.speechSynthesis.resume();
-    }
-    setReadingState('reading');
-  };
+  const startReading = () => start([story.title, ...story.paragraphs]);
 
   const wordCount = story ? story.paragraphs.join(' ').split(/\s+/).length : 0;
   const readMinutes = Math.max(1, Math.round(wordCount / 130));
@@ -255,7 +116,7 @@ function StoryTeller({ onBack }) {
           <p className="eyebrow">Kids • Bedtime story</p>
           <h2>Interactive Story Teller</h2>
         </div>
-        <button className="secondary-btn" onClick={() => { stopReading(); onBack(); }}>Back</button>
+        <button className="secondary-btn" onClick={() => { stop(); onBack(); }}>Back</button>
       </div>
       <div className="foundry-badge" style={{ marginBottom: 16 }}>✦ Foundry IQ</div>
 
@@ -313,16 +174,17 @@ function StoryTeller({ onBack }) {
                 <button className="primary-btn" onClick={startReading}>🔊 Read it to me</button>
               )}
               {readingState === 'reading' && (
-                <button className="primary-btn" onClick={pauseReading}>⏸ Pause</button>
+                <button className="primary-btn" onClick={pause}>⏸ Pause</button>
               )}
               {readingState === 'paused' && (
-                <button className="primary-btn" onClick={resumeReading}>▶ Keep reading</button>
+                <button className="primary-btn" onClick={resume}>▶ Keep reading</button>
               )}
               {readingState !== 'idle' && (
-                <button className="secondary-btn" onClick={stopReading}>⏹ Stop</button>
+                <button className="secondary-btn" onClick={stop}>⏹ Stop</button>
               )}
               <button className="secondary-btn" onClick={restart}>📖 New story</button>
             </div>
+            {readError && <p className="error" style={{ marginBottom: 12 }}>{readError}</p>}
             <div className="story-text">
               {story.paragraphs.map((paragraph, index) => (
                 <p key={index} className={`story-paragraph ${readingIndex === index + 1 ? 'reading' : ''}`}>

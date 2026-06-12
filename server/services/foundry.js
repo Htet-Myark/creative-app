@@ -153,6 +153,54 @@ Respond with JSON: { "paragraphs": ["...", ... 8 paragraphs] }`,
   };
 }
 
+export async function generateMovieRecap(title) {
+  const client = getClient();
+  if (!client) throw new Error('GitHub token not configured. Add GITHUB_TOKEN to server/.env');
+
+  const completion = await client.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: `You narrate movie recaps that are read aloud in about 3 minutes.
+Write a recap of the movie the user names: 480-520 words total, split into 6-8 flowing paragraphs. Each paragraph MUST be 65-85 words — this is required so the recap is long enough.
+Rules:
+- Use simple and intermediate English (CEFR A2-B1 level): common everyday words, short clear sentences. Avoid rare vocabulary, idioms, and complex grammar, so English learners can follow easily.
+- Cover the setup, the main characters, the key plot turns, and how it ends. Full spoilers are expected — it is a recap.
+- Energetic, clear spoken-narration style. No headings, no lists, no markdown.
+- Stay factually accurate to the actual film. Do not invent plot points.
+- Rate your confidence that this recap matches the real film: "high" (famous film you know well), "medium" (you know it but some details may be off), or "low" (you only partly remember it).
+- If you do not recognize the movie at all, set "known" to false and leave the other fields empty.
+Respond ONLY with valid JSON using exactly these fields — no extra text:
+{
+  "known": true or false,
+  "title": "the movie's official title",
+  "year": "release year as a string, or empty string",
+  "confidence": "high", "medium", or "low",
+  "recap": ["paragraph 1", "paragraph 2", ...]
+}`,
+      },
+      { role: 'user', content: `Recap this movie: ${title}` },
+    ],
+    temperature: 0.6,
+    max_tokens: 1400,
+    response_format: { type: 'json_object' },
+  });
+
+  const parsed = JSON.parse(completion.choices[0].message.content);
+  if (parsed.known && (!parsed.title || !Array.isArray(parsed.recap) || parsed.recap.length === 0)) {
+    throw new Error('Model returned unexpected recap format.');
+  }
+  if (!['high', 'medium', 'low'].includes(parsed.confidence)) {
+    parsed.confidence = 'medium';
+  }
+  return {
+    ...parsed,
+    source: 'GitHub Models (Azure AI infrastructure) — Foundry IQ',
+    model: completion.model,
+  };
+}
+
 export async function generateRiddle(topic = 'everyday objects') {
   const client = getClient();
   if (!client) throw new Error('GitHub token not configured. Add GITHUB_TOKEN to server/.env');

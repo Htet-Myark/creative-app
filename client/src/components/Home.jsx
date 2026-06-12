@@ -20,6 +20,12 @@ function Home({ onNavigate }) {
           <button className="primary-btn" onClick={() => onNavigate('sleepSounds')}>Open sleep sounds</button>
         </section>
         <section className="card path-card">
+          <div className="path-badge">Movies</div>
+          <h2>Any movie, recapped in 3 minutes</h2>
+          <p>Type a movie title and AI tells you the whole story out loud — perfect when you skipped the film.</p>
+          <button className="primary-btn" onClick={() => onNavigate('movieRecap')}>Get a recap</button>
+        </section>
+        <section className="card path-card">
           <div className="path-badge">Kids</div>
           <h2>Play a kid-friendly quiz and voice game</h2>
           <p>Enjoy simple riddles and a pronunciation obstacle game that uses your voice.</p>
