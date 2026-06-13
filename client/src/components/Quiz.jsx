@@ -79,7 +79,7 @@ function Quiz({ examId, onBackToList, onHome }) {
         <p className="small">Review the answers below and try again anytime.</p>
         <div className="actions">
           <button className="primary-btn" onClick={loadQuestions}>Retry</button>
-          <button className="secondary-btn" onClick={onHome}>Back home</button>
+          <button className="secondary-btn" onClick={onBackToList}>Back</button>
         </div>
         <div className="review-list">
           {result.review.map((item, index) => (
