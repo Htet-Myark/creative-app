@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { API_URL } from '../config';
-import { normalizeText } from '../utils';
+import { answersMatch } from '../utils';
 
 function Quiz({ examId, onBackToList, onHome }) {
   const [questions, setQuestions] = useState([]);
@@ -45,7 +45,7 @@ function Quiz({ examId, onBackToList, onHome }) {
     const correct = questions.reduce((count, question, index) => {
       const selected = answers[index];
       if (isTextQuestion(question)) {
-        return count + (normalizeText(selected) === normalizeText(question.answerText) ? 1 : 0);
+        return count + (answersMatch(selected, question.answerText) ? 1 : 0);
       }
       return count + (selected === question.answer ? 1 : 0);
     }, 0);
@@ -54,7 +54,7 @@ function Quiz({ examId, onBackToList, onHome }) {
     const review = questions.map((question, index) => {
       const selected = answers[index];
       const isCorrect = isTextQuestion(question)
-        ? normalizeText(selected) === normalizeText(question.answerText)
+        ? answersMatch(selected, question.answerText)
         : selected === question.answer;
       return {
         ...question,

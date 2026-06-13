@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { API_URL } from '../config';
-import { normalizeText } from '../utils';
+import { answersMatch } from '../utils';
 
 const FOUNDRY_TOPICS = ['animals', 'nature', 'food and fruit', 'vehicles', 'weather', 'plants', 'space', 'school supplies', 'sports', 'household objects'];
 
@@ -41,7 +41,7 @@ function FoundryRiddle({ onBack }) {
 
   const submitAnswer = () => {
     if (!riddle || result !== null) return;
-    setResult(normalizeText(answer) === normalizeText(riddle.answerText));
+    setResult(answersMatch(answer, riddle.answerText));
   };
 
   return (

@@ -3,15 +3,6 @@ import { API_URL } from '../config';
 
 const CLIP_SECONDS = 10;
 const TOTAL_ROUNDS = 5;
-const BEST_KEY = 'blindKaraokeBest';
-
-function loadBest() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(BEST_KEY) || 'null');
-    if (stored && typeof stored.score === 'number' && typeof stored.seconds === 'number') return stored;
-  } catch (_) {}
-  return null;
-}
 
 function BlindKaraoke({ onBack }) {
   const [phase, setPhase] = useState('intro'); // intro | loading | playing | revealed | gameOver | error
@@ -28,8 +19,6 @@ function BlindKaraoke({ onBack }) {
   const [startTime, setStartTime] = useState(0);
   const [timer, setTimer] = useState(0);
   const [finalTime, setFinalTime] = useState(0);
-  const [best, setBest] = useState(loadBest);
-  const [isNewBest, setIsNewBest] = useState(false);
 
   const audioRef = useRef(null);
 
@@ -91,7 +80,6 @@ function BlindKaraoke({ onBack }) {
     setStartTime(Date.now());
     setTimer(0);
     setFinalTime(0);
-    setIsNewBest(false);
     loadRound([]);
   };
 
@@ -179,13 +167,6 @@ function BlindKaraoke({ onBack }) {
     if (next >= TOTAL_ROUNDS) {
       const seconds = Math.floor((Date.now() - startTime) / 1000);
       setFinalTime(seconds);
-      const record = { score, seconds };
-      const beatsBest = !best || score > best.score || (score === best.score && seconds < best.seconds);
-      if (beatsBest) {
-        setBest(record);
-        setIsNewBest(true);
-        try { localStorage.setItem(BEST_KEY, JSON.stringify(record)); } catch (_) {}
-      }
       setPhase('gameOver');
     } else {
       setRoundNum(next);
@@ -210,12 +191,7 @@ function BlindKaraoke({ onBack }) {
               🎧 You get a {CLIP_SECONDS}-second clip of a popular song. Guess the song name!
               The clock is ticking — finish all {TOTAL_ROUNDS} songs as fast as you can.
             </p>
-            <p className="small">{TOTAL_ROUNDS} rounds • 1 point per song • your best score and time are saved.</p>
-            {best && (
-              <p className="small" style={{ marginTop: 6 }}>
-                🏆 Your record: <strong>{best.score} of {TOTAL_ROUNDS}</strong> in <strong>{best.seconds}s</strong>
-              </p>
-            )}
+            <p className="small">{TOTAL_ROUNDS} rounds • 1 point per song.</p>
             <div className="actions">
               <button className="primary-btn" onClick={startGame}>🎵 Start guessing</button>
             </div>
@@ -305,10 +281,6 @@ function BlindKaraoke({ onBack }) {
           <h2>Game over!</h2>
           <p>You guessed <strong>{score} of {TOTAL_ROUNDS}</strong> songs.</p>
           <p>Time: <strong>{finalTime} seconds</strong></p>
-          {isNewBest && <p className="success">🏆 New record!</p>}
-          {best && !isNewBest && (
-            <p className="small">Your record: {best.score} of {TOTAL_ROUNDS} in {best.seconds}s</p>
-          )}
           <div className="actions">
             <button className="primary-btn" onClick={startGame}>Play again</button>
             <button className="secondary-btn" onClick={onBack}>Back home</button>

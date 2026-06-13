@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { gameWords } from '../data/gameWords';
-import { normalizeText, shuffleArray } from '../utils';
+import { answersMatch, shuffleArray } from '../utils';
 
 function PronunciationGame({ onBack }) {
   const [pronunciationIndex, setPronunciationIndex] = useState(0);
@@ -79,7 +79,7 @@ function PronunciationGame({ onBack }) {
       const transcript = lastResult[0].transcript.trim();
       setSpeechTranscript(transcript);
       const targetWord = roundWordsRef.current[pronunciationIndexRef.current]?.word || '';
-      if (normalizeText(transcript) === normalizeText(targetWord)) {
+      if (answersMatch(transcript, targetWord)) {
         setPronunciationScore((prev) => prev + 1);
         setSpeechStatus('Perfect! One obstacle cleared.');
         setWordFeedback('correct');

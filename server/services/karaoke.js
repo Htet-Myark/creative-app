@@ -88,6 +88,7 @@ function normalizeForMatch(value) {
     .toLowerCase()
     .replace(/\(.*?\)/g, '')
     .replace(/\bfeat\..*$/g, '')
+    .replace(/\b(a|an|the)\b/g, '') // ignore articles, so "the sun" matches "sun"
     .replace(/[^a-z0-9]/g, '');
 }
 
